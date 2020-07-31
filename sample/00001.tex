@@ -1,0 +1,62 @@
+\documentclass[a4j,12pt,fleqn,dvipdfmx]{jsarticle}
+\usepackage{lib/Quiz}
+\usepackage{Setup}
+\input{lib/DRAFT_SWITCH}
+
+\definecolor{Red}{RGB}{255,0,0}
+\definecolor{Blue}{RGB}{0,0,255}
+\definecolor{Green}{RGB}{0,166,93}
+\def\Red{\color{Red}}
+\def\Blue{\color{Blue}}
+\def\Green{\color{Green}}
+
+\gdef\reportinstruction{□《提出方法》 まずは，しっかりとした答案（図示を含む）を，ノートに作成してください．得られた選択肢を，C-Learning 科目名 → 小テスト →
+「{\reporttitle}…」より入力・送信してください（ノートの内容は提出しません）．□}
+
+\begin{document}
+
+\begin{Quiz}{1}{小テストタイトル} %{講義回}{小テストタイトル}
+
+\vskip1zh
+
+シリアルナンバー.tex の「シリアルナンバー」は，選択肢をシャッフルする乱数のシードとして使われる．
+以下の空欄に相応しい内容を選択肢から選べ.
+
+\paragraph{\Red 重大な注意点}
+同じ内容の正答が存在すると，答案が一意でなくなり，不当な減点が起こります．
+
+
+
+\paragraph{問1}
+
+次の空欄に相応しい図を選べ．
+
+%%%
+%%% \Qbox{配点}{正答}
+%%%
+\begin{center}
+  \Qbox{2}{\includegraphics[scale=0.3]{lib/sample1.eps}}
+\end{center}
+
+\paragraph{問2}
+
+次の空欄に相応しい式を選べ．
+%%%
+%%% amsmath の align, gather 等を使うと連番が狂う．
+%%%
+\begin{equation}
+  I = \Qbox{2}{$\displaystyle \int_{-1}^{1}\sin x\,dx$}
+\end{equation}
+インライン\Qbox{2}{$\sin x$}でも大丈夫．もちろん\Qbox{2}{文字}でも大丈夫．
+
+%%%
+%%% \Qdummy{誤答}
+%%%
+\Qdummy{\includegraphics[scale=0.3]{lib/sample2.eps}}
+\Qdummy{$\displaystyle \int_{-1}^{1}\cos x\,dx$}
+\Qdummy{$\tan x$}
+
+\vskip2zh
+
+\end{Quiz}
+\end{document}

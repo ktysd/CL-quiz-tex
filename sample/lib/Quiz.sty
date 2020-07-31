@@ -1,0 +1,144 @@
+%%% Quiz Generator
+%%% by yoshidak
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{Quiz}[2020/04/07 by yoshidak]
+
+\RequirePackage{lib/randomshuffle}
+\RequirePackage{alphalph}
+
+\newif\ifhideanswerlist
+\hideanswerlistfalse
+
+\newif\ifDraftmode
+\Draftmodefalse
+
+\DeclareOption{hide}{\hideanswerlisttrue}
+\ProcessOptions
+
+\newcount\QboxN
+\newcount\QoptN
+\setlength{\fboxsep}{2pt}
+
+\long\def\Qbox#1#2{%
+  \global\advance\QoptN\@ne%
+  \def\qboxlabel{\sffamily\the\QoptN\,%
+        {\color{Green}\scriptsize /#1\kern0pt点}}
+  \ifDraftmode%
+    \,\fbox{\qboxlabel~\mbox{#2}}\,%
+  \else%
+    \,\fbox{\qboxlabel}\,%
+  \fi%
+  \global\@namedef{problem\the\QoptN}{\the\QoptN}%
+  \global\@namedef{point\the\QoptN}{#1}%
+  \global\@namedef{answer\the\QoptN}{\mbox{#2}}%
+}
+
+\long\def\Qref#1#2{%
+  \def\qboxlabel{\sffamily#1}
+  \ifDraftmode%
+    \,\fbox{\qboxlabel{\color{Green}\scriptsize /}~\mbox{#2}}\,%
+  \else%
+    \,\fbox{\qboxlabel}\,%
+  \fi%
+}
+
+\newif\ifbeforedummy
+\beforedummytrue
+
+\long\def\Qdummy#1{%
+  \ifbeforedummy%
+    \QboxN=\QoptN%
+    \beforedummyfalse%
+  \fi
+  \global\advance\QoptN\@ne
+  \global\@namedef{problem\the\QoptN}{\the\QoptN}%
+  \global\@namedef{point\the\QoptN}{0}%
+  \global\@namedef{answer\the\QoptN}{\mbox{#1}}%
+}
+
+\def\printOptions#1{
+  % arg1 = seed of random number
+  \randomshuffle[seed=#1, name=shuffled]{1}{\QoptN}%
+  \@tempcnta=0%
+  \par\vskip8pt minus 5pt\noindent%
+  \begin{minipage}{\hsize}
+  \noindent{\bf ■選択肢■}\quad%
+  \loop\ifnum\@tempcnta<\QoptN
+    \advance\@tempcnta by1%
+    {\sf (\alphalph{\the\@tempcnta})}\hskip 0.7zw minus 0.5zw\nolinebreak%
+    \@nameuse{answer\shuffled{\the\@tempcnta}}\hskip1.5zw plus 6zw
+  \repeat
+  \end{minipage}%
+}
+
+\def\printAnswers#1{%
+  \subsection*{【#1の正答】}%
+  \@tempcnta=0%
+  \@tempcntb=0%
+  \begin{itemize}
+  \loop\ifnum\@tempcnta<\QoptN
+    \advance\@tempcnta by1%
+    \item
+    \ifnum\@tempcnta>\QboxN\else%
+      \fbox{\sf\the\@tempcnta}\fi
+    \quad(\alphalph{\shuffledinverse{\the\@tempcnta}})
+    \@nameuse{answer\the\@tempcnta}
+    \qquad{\bf 〔\@nameuse{point\the\@tempcnta}点〕}
+    \advance\@tempcntb by\@nameuse{point\the\@tempcnta}
+  \repeat
+  \item {\bf \the\@tempcntb 点満点}
+  \end{itemize}%
+}
+
+\gdef\QuizSentence{QuizSentence is empty}
+
+\newenvironment{Quiz}[2]{%report title, problem title
+  \gdef\Qtitle{#1}
+  \gdef\Qsubtitle{#2}
+  \QboxN=0%
+  \QoptN=0%
+  %%% 補助ファイルオープン
+  \begingroup%
+    \if@filesw\newwrite\fp@quiz\relax%
+    \immediate\openout\fp@quiz\jobname.quiz\relax\fi%
+  \global\@nobreakfalse\endgroup%
+}{%
+  \ifbeforedummy\let\QboxN=\QoptN\fi%
+  %%% Gift形式の問題ファイル
+  \begingroup\def\mysharp{..SHARP..}%
+%  \outputAnswers{\Qtitle （\Qsubtitle ）\mysharp\jobname}%
+  \outputAnswers{\Qtitle\Qsubtitle}%
+  \endgroup%
+  %%% 補助ファイルクローズ
+  \if@filesw\immediate\closeout\fp@quiz\relax\fi%
+  \ifhideanswerlist\else\newpage\printAnswers{\#\jobname}\fi%
+}
+
+\def\outputAnswers#1{%
+  \begingroup%
+  \@tempcnta=0%
+  %%% 補助ファイルへの書き込み
+  \if@filesw\immediate\write\fp@quiz{%
+    title,,#1,
+  }\fi%
+  \if@filesw\immediate\write\fp@quiz{%
+    sentence,,\QuizSentence,%
+  }\fi%
+  \loop\ifnum\@tempcnta<\QoptN%
+    \advance\@tempcnta by1%
+    \def\optindex{\shuffledinverse{\the\@tempcnta}}%
+    \def\optlabel{(\alphalph{\shuffledinverse{\the\@tempcnta}})}%
+    \ifnum\@tempcnta>\QboxN%
+      \def\qboxlabel{dummy}%
+    \else%
+      \def\qboxlabel{\the\@tempcnta}%
+    \fi%
+    \def\subpoint{\@nameuse{point\the\@tempcnta}}%
+    \if@filesw\immediate\write\fp@quiz{%
+      \qboxlabel,\subpoint,\optlabel,\optindex%
+    }\fi%
+  \repeat%
+  \endgroup%
+}
+

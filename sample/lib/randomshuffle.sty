@@ -1,0 +1,74 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{randomshuffle}[2019/01/18 v0.2]
+\RequirePackage{keyval}
+
+\ifdefined\pdfuniformdeviate
+  \let\randomshuffle@uniformdeviate\pdfuniformdeviate
+  \let\randomshuffle@setrandomseed\pdfsetrandomseed
+\else\ifdefined\uniformdeviate
+  \let\randomshuffle@uniformdeviate\uniformdeviate
+  \let\randomshuffle@setrandomseed\setrandomseed
+\else
+  \PackageError{randomshuffle}{\detokenize{This LaTeX engine does not support \pdfuniformdeviate nor \uniformdeviate}}\@ehc
+\fi\fi
+
+\newcount\randomshuffle@first
+\newcount\randomshuffle@last
+\newcount\randomshuffle@k
+\newcount\randomshuffle@t
+\newcount\randomshuffle@j
+
+%%% 1以上#1以下の乱数を生成する
+\def\randomshuffle@rand#1{\the\numexpr\randomshuffle@uniformdeviate\numexpr#1\relax+\@ne\relax}
+
+\def\randomshuffle@swap#1#2#3{%
+  \edef\randomshuffle@temp{\csname#1@\the#2\endcsname}%
+  \expandafter\xdef\csname#1@\the#2\endcsname{\csname#1@\the#3\endcsname}%
+  \expandafter\xdef\csname#1@\the#3\endcsname{\randomshuffle@temp}%
+}
+
+\def\randomshuffle@name{shuffled}
+\def\randomshuffle@inverse@suffix{inverse}
+
+\define@key{randomshuffle@parameters}{seed}{\randomshuffle@setrandomseed#1\relax}
+\define@key{randomshuffle@parameters}{name}{\edef\randomshuffle@name{#1}}
+\define@key{randomshuffle@parameters}{inversesuffix}{\edef\randomshuffle@inverse@suffix{#1}}
+
+\newcommand*\randomshuffle[3][]{%
+  \setkeys{randomshuffle@parameters}{#1}%
+  \randomshuffle@first=\numexpr#2\relax
+  \randomshuffle@last=\numexpr#3\relax
+  %% 呼び出し用の命令を作成
+  %%% 正写像アクセサ
+  \expandafter\global\expandafter\@namedef\expandafter{\expandafter\randomshuffle@name\expandafter}\expandafter##\expandafter1\expandafter{\expandafter\csname\randomshuffle@name @##1\endcsname}%
+  %%% 逆写像アクセサ
+  \edef\randomshuffle@inverse{\randomshuffle@name\randomshuffle@inverse@suffix}%
+  \expandafter\global\expandafter\@namedef\expandafter{\expandafter\randomshuffle@inverse\expandafter}\expandafter##\expandafter1\expandafter{\expandafter\csname\randomshuffle@inverse @##1\endcsname}%
+  %%% 写像の初期化
+  \randomshuffle@k=\randomshuffle@first
+  {\loop
+    \global\randomshuffle@t=\numexpr\randomshuffle@k-\randomshuffle@first+\@ne\relax
+    \expandafter\xdef\csname\randomshuffle@name @\the\randomshuffle@t\endcsname{\the\randomshuffle@k}% 正写像アクセサを初期化
+    \expandafter\xdef\csname\randomshuffle@name\randomshuffle@inverse@suffix @\the\randomshuffle@t\endcsname{\the\randomshuffle@k}% 逆写像アクセサを初期化
+    \advance\randomshuffle@k\@ne
+  \unless\ifnum\randomshuffle@k>\randomshuffle@last\repeat}%
+  %
+  %%% 正写像にあたる置換の生成
+  \let\randomshuffle@list\@empty
+  \randomshuffle@j=\randomshuffle@t% j=tから下げていく
+  {\loop
+    \randomshuffle@k=\randomshuffle@rand{\randomshuffle@j}% 1以上j以下の乱数kを取得
+    \randomshuffle@swap{\randomshuffle@name}{\randomshuffle@j}{\randomshuffle@k}% j番目とk番目を交換
+    \xdef\randomshuffle@list{{\the\randomshuffle@k}\randomshuffle@list}% 生成した乱数を既存乱数列の先頭にpush
+    \advance\randomshuffle@j\m@ne% jを1減じる
+  \ifnum\randomshuffle@j>\@ne\repeat}%
+  %
+  %%% 逆写像にあたる置換の生成
+  \randomshuffle@j=\tw@% j=2から上げていく
+  \expandafter\@tfor\expandafter\randomshuffle@r\expandafter:\expandafter=\randomshuffle@list\do{%
+      \randomshuffle@swap{\randomshuffle@name\randomshuffle@inverse@suffix}{\numexpr\randomshuffle@r\relax}{\randomshuffle@j}% 現行の逆写像に 互換 (j, 乱数) を合成
+      \advance\randomshuffle@j\@ne% jを1増やす
+  }%
+}
+
+\endinput

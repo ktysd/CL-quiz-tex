@@ -1,0 +1,59 @@
+%%% レイアウトと追加パッケージ
+\usepackage[top=10truemm,bottom=10truemm,left=10truemm,right=10truemm]{geometry}
+
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{ascmac,fancybox}
+\usepackage{wrapfig}
+\usepackage{multicol}
+\columnsep8mm
+\columnseprule0.4pt
+
+% % 背景
+% \usepackage{wallpaper}
+% \CenterWallPaper{1}{ReportDaishi.pdf}
+
+% center環境を狭く
+\renewenvironment{center}
+{\topsep=2pt \partopsep=2pt \trivlist \centering\item\relax}{\endtrivlist}
+
+% page番号なし
+\pagestyle{empty}
+\def\jsParagraphMark{}
+
+%%% マクロ
+\def\選べ/{空欄に相応しい内容を選択肢から選べ}
+
+% タイトル
+\gdef\reporttitle{Report title is empty}
+\gdef\problemtitle{Problem title is empty}
+\gdef\reportinstruction{Report instruction is empty}
+
+\long\def\ReportNumberTitle#1#2{%
+  \gdef\QuizSentence{空欄[NUM]に該当するものを選びなさい．}%
+  \gdef\reporttitle{第#1回}%
+  \gdef\problemtitle{（#2）..SHARP..\jobname}%
+  \par\begingroup\parindent0pt\sffamily%
+    {\bfseries\Large ■科目名「{\reporttitle}」の小テスト■}%
+    \hfill{〔{#2} {\#\jobname}〕}%
+  \endgroup%
+  \par\vskip.7zh\noindent%
+  \begin{minipage}{\hsize}%
+    \color{magenta}\bf\small\noindent\baselineskip10pt%
+    \reportinstruction%
+  \end{minipage}%
+  \par\vspace{.5zh}%
+}
+
+\let\origQuiz=\Quiz
+\let\origendQuiz=\endQuiz
+\def\Quiz#1#2{%
+  \ReportNumberTitle{#1}{#2}%
+  \origQuiz{\reporttitle}{\problemtitle}%
+}
+\def\endQuiz{%
+  \printOptions{\jobname}%
+  \origendQuiz%
+}
+
